@@ -16,6 +16,7 @@ import {
   Zap,
   X,
   Building2,
+  Shield,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -95,13 +96,13 @@ export function AppSidebar({ isMobile, onOpenChange, isCollapsed: collapsed, onC
                 animate={{ opacity: 1, width: "auto" }}
                 exit={{ opacity: 0, width: 0 }}
                 transition={{ duration: 0.2 }}
-                className="overflow-hidden"
+                className="overflow-hidden flex flex-col justify-center"
               >
                 <p className="text-sm font-bold text-foreground tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent leading-tight whitespace-nowrap">
                   Mail by GPSERP
                 </p>
                 <div className="flex items-center gap-1">
-                  <div className="w-1 h-1 rounded-full bg-success animate-pulse" />
+                  <div className="w-1 h-1 rounded-full bg-success animate-pulse shrink-0" />
                   <p className="text-[10px] text-muted-foreground whitespace-nowrap uppercase tracking-wider font-bold opacity-70">AI Outreach</p>
                 </div>
               </motion.div>
@@ -121,12 +122,14 @@ export function AppSidebar({ isMobile, onOpenChange, isCollapsed: collapsed, onC
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto custom-scrollbar">
-        {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
+        {(session?.user?.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL)
+          ? [...NAV_ITEMS, { label: "Admin Console", href: "/admin", icon: Shield }] 
+          : NAV_ITEMS
+        ).map(({ label, href, icon: Icon }) => {
           const isActive = pathname === href;
           return (
             <Link key={href} href={href} onClick={() => isMobile && onOpenChange?.(false)}>
               <motion.div
-                layout
                 whileHover={{ x: (collapsed && !isMobile) ? 0 : 4 }}
                 whileTap={{ scale: 0.98 }}
                 className={`relative flex items-center transition-all cursor-pointer group ${isActive
@@ -136,14 +139,14 @@ export function AppSidebar({ isMobile, onOpenChange, isCollapsed: collapsed, onC
                 title={collapsed && !isMobile ? label : undefined}
               >
                 <Icon className={`w-5 h-5 shrink-0 transition-transform ${isActive ? "scale-110" : "group-hover:scale-110"}`} strokeWidth={isActive ? 2.5 : 2} />
-                <AnimatePresence mode="popLayout">
+                <AnimatePresence>
                   {(!collapsed || isMobile) && (
                     <motion.span
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
+                      initial={{ opacity: 0, width: 0, marginLeft: 0 }}
+                      animate={{ opacity: 1, width: "auto", marginLeft: 4 }}
+                      exit={{ opacity: 0, width: 0, marginLeft: 0 }}
                       transition={{ duration: 0.2 }}
-                      className="text-sm font-semibold overflow-hidden whitespace-nowrap"
+                      className="text-sm font-semibold overflow-hidden whitespace-nowrap origin-left"
                     >
                       {label}
                     </motion.span>
@@ -196,7 +199,7 @@ export function AppSidebar({ isMobile, onOpenChange, isCollapsed: collapsed, onC
                   animate={{ opacity: 1, width: "auto" }}
                   exit={{ opacity: 0, width: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="flex-1 overflow-hidden min-w-0"
+                  className="flex-1 overflow-hidden min-w-0 flex flex-col justify-center pl-1"
                 >
                   <p className="text-sm font-bold text-foreground truncate leading-tight">
                     {session.user?.name}
