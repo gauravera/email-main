@@ -1,11 +1,12 @@
 "use client";
 
-import { signIn, useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Sparkles, Zap, Shield, BarChart2 } from "lucide-react";
+import { toast } from "sonner";
 
 const features = [
     { icon: Sparkles, title: "AI-Personalized Emails", desc: "Gemini writes a unique email for every recipient." },
@@ -19,8 +20,20 @@ export default function SignInPage() {
     const router = useRouter();
 
     useEffect(() => {
-        if (status === "authenticated") {
-            router.push("/");
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            const error = params.get("error");
+            
+            if (error === "MissingPermissions") {
+                toast.error("Please grant the requested permissions to continue.");
+                if (status === "authenticated") {
+                    signOut({ callbackUrl: "/auth/signin" });
+                } else {
+                    router.replace("/auth/signin");
+                }
+            } else if (status === "authenticated") {
+                router.push("/");
+            }
         }
     }, [status, router]);
 

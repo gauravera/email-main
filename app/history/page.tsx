@@ -119,14 +119,27 @@ export default function HistoryPage() {
 
   useEffect(() => {
     if (status === "authenticated") {
+      // 1. Fetch campaigns first for instant rendering
       axios.get("/api/campaigns")
         .then((res) => {
           setCampaigns(res.data.campaigns || []);
+          setIsLoading(false);
+
+          // 2. Perform bounce check silently in the background
+          axios.get("/api/admin/track-bounces")
+            .then(() => {
+              // 3. Re-fetch campaigns to reflect any newly detected failed emails
+              return axios.get("/api/campaigns");
+            })
+            .then((refreshRes) => {
+              setCampaigns(refreshRes.data.campaigns || []);
+            })
+            .catch((bounceErr) => {
+              console.log("Background bounce sync skipped or pending consent:", bounceErr);
+            });
         })
         .catch((err) => {
           console.error(err);
-        })
-        .finally(() => {
           setIsLoading(false);
         });
     }

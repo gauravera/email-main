@@ -17,6 +17,7 @@ export const authOptions: NextAuthOptions = {
             "email",
             "profile",
             "https://www.googleapis.com/auth/gmail.send",
+            "https://www.googleapis.com/auth/gmail.modify",
             "https://www.googleapis.com/auth/generative-language.retriever",
           ].join(" "),
           access_type: "offline",
@@ -31,6 +32,33 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account }) {
       if (account && user) {
+        // Check for required scopes
+        const requiredScopes = [
+          "https://www.googleapis.com/auth/gmail.send",
+          "https://www.googleapis.com/auth/gmail.modify",
+        ];
+        const grantedScopes = account.scope?.split(" ") || [];
+        const hasAllScopes = requiredScopes.every(scope => grantedScopes.includes(scope));
+
+        if (!hasAllScopes) {
+          // Clear token if user revoked permissions
+          const existingAccount = await prisma.account.findFirst({
+            where: { provider: account.provider, providerAccountId: account.providerAccountId }
+          });
+          if (existingAccount) {
+            await prisma.account.update({
+              where: { id: existingAccount.id },
+              data: {
+                access_token: null,
+                refresh_token: null,
+                expires_at: null,
+                scope: account.scope,
+              }
+            });
+          }
+          return "/auth/signin?error=MissingPermissions";
+        }
+
         try {
           const existingAccount = await prisma.account.findFirst({
             where: { provider: account.provider, providerAccountId: account.providerAccountId }

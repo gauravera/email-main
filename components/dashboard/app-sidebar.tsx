@@ -17,6 +17,7 @@ import {
   X,
   Building2,
   Shield,
+  Inbox,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -24,6 +25,11 @@ const NAV_ITEMS = [
     label: "Dashboard",
     href: "/",
     icon: LayoutDashboard,
+  },
+  {
+    label: "Inbox",
+    href: "/inbox",
+    icon: Inbox,
   },
   {
     label: "History",

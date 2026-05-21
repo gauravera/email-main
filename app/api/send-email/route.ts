@@ -8,7 +8,7 @@ import { uploadBase64ToS3, processHtmlForS3 } from "@/lib/s3-upload";
 
 export async function POST(req: Request) {
   try {
-    const { to, cc, emailData, draftId, attachments } = await req.json();
+    const { to, cc, emailData, subject: directSubject, body, draftId, attachments, threadId, originalMessageId } = await req.json();
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
@@ -50,11 +50,17 @@ export async function POST(req: Request) {
     }
 
     const gmail = google.gmail({ version: "v1", auth: oauth2Client });
-    const blockData = typeof emailData === 'string' ? JSON.parse(emailData) : emailData;
-    const subject = blockData?.subject || "Personalized Outreach";
+    const blockData = emailData ? (typeof emailData === 'string' ? JSON.parse(emailData) : emailData) : null;
+    const subject = directSubject || blockData?.subject || "Personalized Outreach";
     
     let htmlContent = "";
-    if (blockData?.blocks && Array.isArray(blockData.blocks)) {
+    if (body) {
+      if (body.includes("<div") || body.includes("<p") || body.includes("<br") || body.includes("<span")) {
+        htmlContent = body;
+      } else {
+        htmlContent = body.replace(/\n/g, "<br />");
+      }
+    } else if (blockData?.blocks && Array.isArray(blockData.blocks)) {
       for (const block of blockData.blocks) {
         if (block.type === 'text') {
            const text = (block.content?.text || '');
@@ -114,6 +120,11 @@ export async function POST(req: Request) {
       "MIME-Version: 1.0",
     ];
 
+    if (originalMessageId) {
+      headers.push(`In-Reply-To: ${originalMessageId}`);
+      headers.push(`References: ${originalMessageId}`);
+    }
+
     if (hasAttachments) {
       headers.push(`Content-Type: multipart/mixed; boundary="${boundary}"`);
       message = [
@@ -152,6 +163,7 @@ export async function POST(req: Request) {
       userId: "me",
       requestBody: {
         raw: encodedMessage,
+        threadId: threadId || undefined,
       },
     });
 

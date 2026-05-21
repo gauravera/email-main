@@ -31,33 +31,72 @@ interface UserAnalyticsChartsProps {
 
 type TimeRange = "hourly" | "daily" | "monthly";
 
+const getLocalDateKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 export default function UserAnalyticsCharts({ drafts, geminiUsage }: UserAnalyticsChartsProps) {
   const [mounted, setMounted] = useState(false);
   const [timeRange, setTimeRange] = useState<TimeRange>("daily");
   const [showGenerated, setShowGenerated] = useState(true);
   const [showSent, setShowSent] = useState(true);
 
+  // Selector states
+  const [selectedHourlyDate, setSelectedHourlyDate] = useState(() => getLocalDateKey(new Date()));
+  const [selectedDailyMonth, setSelectedDailyMonth] = useState(() => new Date().getMonth());
+  const [selectedDailyYear, setSelectedDailyYear] = useState(() => new Date().getFullYear());
+  const [selectedMonthlyYear, setSelectedMonthlyYear] = useState(() => new Date().getFullYear());
+
   // Prevent SSR hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Compute available active years from drafts and geminiUsage history
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    const currentYear = new Date().getFullYear();
+    years.add(currentYear);
+
+    drafts.forEach((draft) => {
+      if (draft.createdAt) {
+        const y = new Date(draft.createdAt).getFullYear();
+        if (!isNaN(y)) years.add(y);
+      }
+      if (draft.sentAt) {
+        const y = new Date(draft.sentAt).getFullYear();
+        if (!isNaN(y)) years.add(y);
+      }
+    });
+
+    geminiUsage.forEach((usage) => {
+      if (usage.createdAt) {
+        const y = new Date(usage.createdAt).getFullYear();
+        if (!isNaN(y)) years.add(y);
+      }
+    });
+
+    return Array.from(years).sort((a, b) => b - a);
+  }, [drafts, geminiUsage]);
+
   const chartData = useMemo(() => {
     if (!mounted) return [];
 
-    const now = new Date();
-
     if (timeRange === "hourly") {
-      // 1. Hourly: Last 24 Hours
+      const parts = selectedHourlyDate.split("-");
+      const targetYear = parseInt(parts[0], 10);
+      const targetMonthIdx = parseInt(parts[1], 10) - 1;
+      const targetDay = parseInt(parts[2], 10);
+
+      // 1. Hourly: Chosen Day
       const hours = Array.from({ length: 24 }).map((_, idx) => {
-        const d = new Date(now.getTime() - (23 - idx) * 60 * 60 * 1000);
-        d.setMinutes(0, 0, 0);
+        const d = new Date(targetYear, targetMonthIdx, targetDay, idx, 0, 0, 0);
         return {
-          key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-            d.getDate()
-          ).padStart(2, "0")}T${String(d.getHours()).padStart(2, "0")}:00:00`,
+          hourIdx: idx,
           label: d.toLocaleTimeString([], { hour: "numeric", hour12: true }),
-          dateObj: d,
           mailsGenerated: 0,
           mailsSent: 0,
         };
@@ -65,17 +104,13 @@ export default function UserAnalyticsCharts({ drafts, geminiUsage }: UserAnalyti
 
       drafts.forEach((draft) => {
         const draftDate = new Date(draft.createdAt);
-        const diffHours = Math.floor((now.getTime() - draftDate.getTime()) / (1000 * 60 * 60));
-        if (diffHours >= 0 && diffHours < 24) {
-          const draftHourStart = new Date(draftDate);
-          draftHourStart.setMinutes(0, 0, 0);
-          const hourKey = `${draftHourStart.getFullYear()}-${String(
-            draftHourStart.getMonth() + 1
-          ).padStart(2, "0")}-${String(draftHourStart.getDate()).padStart(2, "0")}T${String(
-            draftHourStart.getHours()
-          ).padStart(2, "0")}:00:00`;
-          
-          const slot = hours.find((h) => h.key === hourKey);
+        if (
+          draftDate.getFullYear() === targetYear &&
+          draftDate.getMonth() === targetMonthIdx &&
+          draftDate.getDate() === targetDay
+        ) {
+          const hourIdx = draftDate.getHours();
+          const slot = hours.find((h) => h.hourIdx === hourIdx);
           if (slot) {
             slot.mailsGenerated += 1;
             if (draft.status === "sent") {
@@ -91,12 +126,15 @@ export default function UserAnalyticsCharts({ drafts, geminiUsage }: UserAnalyti
         "Mails Sent": h.mailsSent,
       }));
     } else if (timeRange === "daily") {
-      // 2. Daily: Last 30 Days
-      const days = Array.from({ length: 30 }).map((_, idx) => {
-        const d = new Date(now.getTime() - (29 - idx) * 24 * 60 * 60 * 1000);
-        d.setHours(0, 0, 0, 0);
+      // 2. Daily: Custom Month/Year
+      const year = selectedDailyYear;
+      const monthIdx = selectedDailyMonth;
+      const totalDaysInMonth = new Date(year, monthIdx + 1, 0).getDate();
+
+      const days = Array.from({ length: totalDaysInMonth }).map((_, idx) => {
+        const d = new Date(year, monthIdx, idx + 1);
         return {
-          key: d.toISOString().split("T")[0],
+          key: getLocalDateKey(d),
           label: d.toLocaleDateString([], { month: "short", day: "numeric" }),
           dateObj: d,
           mailsGenerated: 0,
@@ -106,18 +144,28 @@ export default function UserAnalyticsCharts({ drafts, geminiUsage }: UserAnalyti
 
       drafts.forEach((draft) => {
         const draftDate = new Date(draft.createdAt);
-        const dateKey = draftDate.toISOString().split("T")[0];
-        const slot = days.find((day) => day.key === dateKey);
-        if (slot) {
-          slot.mailsGenerated += 1;
+        if (
+          draftDate.getFullYear() === year &&
+          draftDate.getMonth() === monthIdx
+        ) {
+          const dateKey = getLocalDateKey(draftDate);
+          const slot = days.find((day) => day.key === dateKey);
+          if (slot) {
+            slot.mailsGenerated += 1;
+          }
         }
 
         if (draft.status === "sent" && draft.sentAt) {
           const sentDate = new Date(draft.sentAt);
-          const sentKey = sentDate.toISOString().split("T")[0];
-          const sentSlot = days.find((day) => day.key === sentKey);
-          if (sentSlot) {
-            sentSlot.mailsSent += 1;
+          if (
+            sentDate.getFullYear() === year &&
+            sentDate.getMonth() === monthIdx
+          ) {
+            const sentKey = getLocalDateKey(sentDate);
+            const sentSlot = days.find((day) => day.key === sentKey);
+            if (sentSlot) {
+              sentSlot.mailsSent += 1;
+            }
           }
         }
       });
@@ -128,13 +176,13 @@ export default function UserAnalyticsCharts({ drafts, geminiUsage }: UserAnalyti
         "Mails Sent": d.mailsSent,
       }));
     } else {
-      // 3. Monthly: Last 12 Months
+      // 3. Monthly: Custom Year
+      const currentYear = selectedMonthlyYear;
       const months = Array.from({ length: 12 }).map((_, idx) => {
-        const d = new Date(now.getFullYear(), now.getMonth() - (11 - idx), 1);
+        const d = new Date(currentYear, idx, 1);
         return {
-          year: d.getFullYear(),
-          month: d.getMonth(),
-          label: d.toLocaleDateString([], { month: "short", year: "2-digit" }),
+          monthIdx: idx,
+          label: d.toLocaleDateString([], { month: "short" }),
           mailsGenerated: 0,
           mailsSent: 0,
         };
@@ -142,21 +190,22 @@ export default function UserAnalyticsCharts({ drafts, geminiUsage }: UserAnalyti
 
       drafts.forEach((draft) => {
         const draftDate = new Date(draft.createdAt);
-        const draftYear = draftDate.getFullYear();
-        const draftMonth = draftDate.getMonth();
-
-        const slot = months.find((m) => m.year === draftYear && m.month === draftMonth);
-        if (slot) {
-          slot.mailsGenerated += 1;
+        if (draftDate.getFullYear() === currentYear) {
+          const mIdx = draftDate.getMonth();
+          const slot = months.find((m) => m.monthIdx === mIdx);
+          if (slot) {
+            slot.mailsGenerated += 1;
+          }
         }
 
         if (draft.status === "sent" && draft.sentAt) {
           const sentDate = new Date(draft.sentAt);
-          const sentYear = sentDate.getFullYear();
-          const sentMonth = sentDate.getMonth();
-          const sentSlot = months.find((m) => m.year === sentYear && m.month === sentMonth);
-          if (sentSlot) {
-            sentSlot.mailsSent += 1;
+          if (sentDate.getFullYear() === currentYear) {
+            const mIdx = sentDate.getMonth();
+            const slot = months.find((m) => m.monthIdx === mIdx);
+            if (slot) {
+              slot.mailsSent += 1;
+            }
           }
         }
       });
@@ -167,7 +216,26 @@ export default function UserAnalyticsCharts({ drafts, geminiUsage }: UserAnalyti
         "Mails Sent": m.mailsSent,
       }));
     }
-  }, [mounted, timeRange, drafts, geminiUsage]);
+  }, [
+    mounted,
+    timeRange,
+    drafts,
+    geminiUsage,
+    selectedHourlyDate,
+    selectedDailyMonth,
+    selectedDailyYear,
+    selectedMonthlyYear,
+  ]);
+
+  // Helper for Hourly localized text representation
+  const getHourlyDateLabel = () => {
+    const parts = selectedHourlyDate.split("-");
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+    const d = new Date(year, month, day);
+    return d.toLocaleDateString([], { dateStyle: "long" });
+  };
 
   if (!mounted) {
     return (
@@ -187,12 +255,67 @@ export default function UserAnalyticsCharts({ drafts, geminiUsage }: UserAnalyti
             <BarChart3 className="w-5 h-5 text-indigo-500" /> Usage Visualization
           </h2>
           <p className="text-xs text-muted-foreground">
-            Analyze mail generation and sending patterns across different scales.
+            {timeRange === "hourly"
+              ? `Showing hourly usage for ${getHourlyDateLabel()}`
+              : timeRange === "daily"
+              ? `Showing daily usage for ${new Date(selectedDailyYear, selectedDailyMonth, 1).toLocaleDateString([], { month: "long", year: "numeric" })}`
+              : `Showing monthly usage for the year ${selectedMonthlyYear}`}
           </p>
         </div>
 
         {/* Dynamic Controls */}
         <div className="flex flex-wrap items-center gap-3">
+          {/* Time range selectors */}
+          {timeRange === "hourly" && (
+            <input
+              type="date"
+              value={selectedHourlyDate}
+              onChange={(e) => setSelectedHourlyDate(e.target.value)}
+              className="bg-background border border-border text-foreground hover:bg-muted font-medium py-1 px-2.5 rounded-lg text-xs transition-all shadow-sm outline-none cursor-pointer focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 h-8 animate-in fade-in slide-in-from-top-1 duration-200"
+            />
+          )}
+
+          {timeRange === "daily" && (
+            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
+              <select
+                value={selectedDailyMonth}
+                onChange={(e) => setSelectedDailyMonth(parseInt(e.target.value, 10))}
+                className="bg-background border border-border text-foreground hover:bg-muted font-medium py-1 px-2.5 rounded-lg text-xs transition-all shadow-sm outline-none cursor-pointer focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 h-8"
+              >
+                {Array.from({ length: 12 }).map((_, idx) => (
+                  <option key={idx} value={idx}>
+                    {new Date(2026, idx, 1).toLocaleDateString([], { month: "long" })}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={selectedDailyYear}
+                onChange={(e) => setSelectedDailyYear(parseInt(e.target.value, 10))}
+                className="bg-background border border-border text-foreground hover:bg-muted font-medium py-1 px-2.5 rounded-lg text-xs transition-all shadow-sm outline-none cursor-pointer focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 h-8"
+              >
+                {availableYears.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {timeRange === "monthly" && (
+            <select
+              value={selectedMonthlyYear}
+              onChange={(e) => setSelectedMonthlyYear(parseInt(e.target.value, 10))}
+              className="bg-background border border-border text-foreground hover:bg-muted font-medium py-1 px-2.5 rounded-lg text-xs transition-all shadow-sm outline-none cursor-pointer focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 h-8 animate-in fade-in slide-in-from-top-1 duration-200"
+            >
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          )}
+
           {/* Time range buttons */}
           <div className="inline-flex rounded-lg border border-border bg-muted/40 p-1">
             <button
