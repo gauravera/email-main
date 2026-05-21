@@ -413,7 +413,7 @@ export default function Dashboard() {
   if (status === "unauthenticated") return null;
 
   return (
-    <div className="flex flex-col flex-1 min-h-screen bg-background">
+    <div className="flex flex-col flex-1 overflow-y-auto bg-background">
 
       <main className="max-w-7xl mx-auto px-6 py-8 pb-36">
         <div className="mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6">

@@ -84,7 +84,7 @@ export default function BrandProfilesPage() {
   );
 
   return (
-    <div className="flex flex-col flex-1 min-h-screen bg-background">
+    <div className="flex flex-col flex-1 bg-background overflow-y-auto">
       <main className="max-w-7xl mx-auto px-6 py-8 w-full">
         <div className="mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>

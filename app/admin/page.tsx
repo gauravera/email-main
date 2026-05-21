@@ -50,7 +50,7 @@ export default async function AdminPage() {
   ]);
 
   return (
-    <div className="flex-1 p-8 min-h-screen bg-background">
+    <div className="flex-1 p-8 bg-background overflow-y-auto">
       <h1 className="text-3xl font-extrabold text-foreground tracking-tight mb-8">
         Admin Console
       </h1>

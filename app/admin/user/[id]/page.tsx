@@ -90,7 +90,7 @@ export default async function UserAnalyticsPage({ params }: { params: Promise<{ 
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
-    <div className="flex-1 p-4 sm:p-6 md:p-8 min-h-screen bg-background">
+    <div className="flex-1 p-4 sm:p-6 md:p-8 bg-background overflow-y-auto">
       <div className="flex items-center gap-4 mb-8">
         <Link href="/admin" className="p-2 hover:bg-muted rounded-full transition-colors">
           <ArrowLeft className="w-5 h-5 text-muted-foreground" />
