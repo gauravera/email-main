@@ -17,6 +17,7 @@ import {
   X,
   Building2,
   Shield,
+  BarChart3,
   Inbox,
 } from "lucide-react";
 
@@ -35,6 +36,11 @@ const NAV_ITEMS = [
     label: "History",
     href: "/history",
     icon: History,
+  },
+  {
+    label: "Analytics",
+    href: "/analytics",
+    icon: BarChart3,
   },
   {
     label: "Brand Profiles",

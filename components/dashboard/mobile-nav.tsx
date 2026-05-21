@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { LayoutDashboard, History, Menu } from "lucide-react";
+import { LayoutDashboard, History, Menu, BarChart3 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const NAV_ITEMS = [
@@ -12,6 +12,11 @@ const NAV_ITEMS = [
     label: "Home",
     href: "/",
     icon: LayoutDashboard,
+  },
+  {
+    label: "Analytics",
+    href: "/analytics",
+    icon: BarChart3,
   },
   {
     label: "History",

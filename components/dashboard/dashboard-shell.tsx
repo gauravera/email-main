@@ -17,7 +17,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-background flex-col lg:flex-row">
+    <div className="flex h-screen overflow-hidden bg-background flex-col lg:flex-row">
       {/* Desktop Sidebar */}
       <motion.div 
         className="hidden lg:flex"

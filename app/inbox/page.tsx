@@ -549,17 +549,17 @@ export default function InboxPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.25, ease: "easeOut" }}
-                className="flex-1 flex flex-col h-full overflow-hidden"
+                className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar"
               >
-                {/* Email Subject Title */}
-                <div className="px-6 py-5 border-b border-border bg-card/20 shrink-0">
+                {/* Email Subject Title — sticky so it stays visible while scrolling */}
+                <div className="sticky top-0 z-10 px-6 py-5 border-b border-border bg-background/95 backdrop-blur-sm">
                   <h2 className="text-lg font-bold text-foreground leading-tight tracking-tight">
                     {selectedEmail.subject}
                   </h2>
                 </div>
 
-                {/* Sender / Recipient Metadata Details */}
-                <div className="px-6 py-4 border-b border-border flex items-center gap-3 shrink-0">
+                {/* Sender / Recipient Metadata Details — sticky below subject */}
+                <div className="sticky top-[68px] z-10 px-6 py-4 border-b border-border flex items-center gap-3 bg-background/95 backdrop-blur-sm">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center font-bold text-sm text-primary select-none shrink-0">
                     {getSenderInitials(selectedEmail.from)}
                   </div>
@@ -590,14 +590,13 @@ export default function InboxPage() {
                   </div>
                 </div>
 
-                {/* Email Content Body */}
-                <div className="flex-1 p-6 overflow-y-auto min-h-0 custom-scrollbar select-text selection:bg-primary/25">
-                  {/* Render as a premium, high-contrast white paper sheet to guarantee perfect legibility for all HTML and rich-text emails */}
-                  <div className="bg-[#ffffff] text-slate-900 rounded-2xl border border-border p-8 shadow-md select-text max-w-4xl mx-auto w-full">
+                {/* Email Content Body — white box sizes to content, no extra height */}
+                <div className="p-6 pb-8 select-text selection:bg-primary/25">
+                  <div className="bg-[#ffffff] text-slate-900 rounded-2xl border border-border p-8 shadow-md select-text max-w-4xl mx-auto w-full overflow-x-hidden">
                     {/* Render plain-text with formatting preserve, or html if matched */}
                     {selectedEmail.body.includes("<div") || selectedEmail.body.includes("<p") || selectedEmail.body.includes("<span") || selectedEmail.body.includes("<table") ? (
                       <div
-                        className="text-sm text-slate-800 leading-relaxed font-sans select-text break-words prose max-w-none [&_a]:text-primary [&_a]:underline"
+                        className="text-sm text-slate-800 leading-relaxed font-sans select-text break-words prose max-w-none [&_a]:text-primary [&_a]:underline [&_img]:max-w-full [&_img]:h-auto [&_img]:block [&_table]:max-w-full [&_table]:w-full [&_table]:table-fixed [&_td]:break-words [&_th]:break-words"
                         dangerouslySetInnerHTML={{ __html: selectedEmail.body }}
                       />
                     ) : (

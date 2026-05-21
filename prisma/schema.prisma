@@ -157,14 +157,15 @@ model EmailDraft {
 
 // Track per-user Gemini API usage for billing / quota management.
 model GeminiUsage {
-  id          String   @id @default(cuid())
-  userId      String
-  campaignId  String?
-  tokensUsed  Int
-  model       String
-  createdAt   DateTime @default(now())
+  id              String   @id @default(cuid())
+  userId          String
+  campaignId      String?
+  tokensUsed      Int
+  emailsGenerated Int?
+  model           String
+  createdAt       DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
