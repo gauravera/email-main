@@ -120,7 +120,7 @@ export default async function AdminPage() {
                     "openid",
                     "email",
                     "profile",
-                    "https://www.googleapis.com/auth/gmail.send",
+                    "https://www.googleapis.com/auth/gmail.modify",
                     "https://www.googleapis.com/auth/generative-language.retriever"
                   ];
                   const userScopeString = u.accounts[0]?.scope || "";

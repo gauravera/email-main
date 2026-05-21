@@ -16,7 +16,6 @@ export const authOptions: NextAuthOptions = {
             "openid",
             "email",
             "profile",
-            "https://www.googleapis.com/auth/gmail.send",
             "https://www.googleapis.com/auth/gmail.modify",
             "https://www.googleapis.com/auth/generative-language.retriever",
           ].join(" "),
@@ -34,7 +33,6 @@ export const authOptions: NextAuthOptions = {
       if (account && user) {
         // Check for required scopes
         const requiredScopes = [
-          "https://www.googleapis.com/auth/gmail.send",
           "https://www.googleapis.com/auth/gmail.modify",
         ];
         const grantedScopes = account.scope?.split(" ") || [];

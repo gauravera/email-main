@@ -126,7 +126,7 @@ export default function SignInPage() {
                         {" "}and{" "}
                         <a href="/privacy" className="underline hover:text-foreground transition-colors">Privacy Policy</a>.
                         <br />
-                        We request Gmail Send permission — we never read your inbox.
+                        We request Gmail Access permission to display your inbox replies and send emails.
                     </p>
                 </motion.div>
             </div>

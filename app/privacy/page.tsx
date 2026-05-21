@@ -32,7 +32,7 @@ export default function PrivacyPolicy() {
         </p>
         <ul className="list-disc pl-6 space-y-2">
           <li><strong>Google Account Profile</strong>: your name, email address, and profile photo (from Google OAuth).</li>
-          <li><strong>Gmail Send Permission</strong>: we request the <code>https://www.googleapis.com/auth/gmail.send</code> scope only, which allows us to send emails on your behalf. We do <em>not</em> read, access, or store your inbox messages.</li>
+          <li><strong>Gmail Access Permission</strong>: we request the <code>https://www.googleapis.com/auth/gmail.modify</code> scope. This allows us to display your outreach inbox, read inbound replies and bounce notifications, compose and send emails, and mark emails as read/unread when you view them in our application.</li>
           <li><strong>Uploaded CSV Data</strong>: recipient names and email addresses you upload to generate personalized emails. This data is processed in memory and not stored on our servers.</li>
         </ul>
       </section>
@@ -41,7 +41,9 @@ export default function PrivacyPolicy() {
         <h2 className="text-2xl font-semibold mb-4">3. How We Use Your Data</h2>
         <ul className="list-disc pl-6 space-y-2">
           <li>To authenticate you via Google OAuth and maintain your session.</li>
-          <li>To send emails you have composed and approved via your own Gmail account.</li>
+          <li>To display and manage your sales outreach inbox, including email threads and inbound replies.</li>
+          <li>To compose, send, and update the status (read/unread) of emails via your own Gmail account.</li>
+          <li>To identify bounce notifications (e.g. from mailer-daemon) to track and report outreach delivery rates.</li>
           <li>To generate personalized email content using the AI model you select.</li>
         </ul>
         <p className="mt-4">
@@ -72,8 +74,7 @@ export default function PrivacyPolicy() {
       <section className="mb-8">
         <h2 className="text-2xl font-semibold mb-4">5. Data Retention &amp; Security</h2>
         <p className="mb-4">
-          OAuth tokens are stored securely in your browser session and are not persisted beyond your session unless you use
-          the "Remember me" option. We do not store Gmail message content or recipient email bodies on our servers.
+          OAuth tokens are stored securely in your database session. We transiently fetch and cache message details to display your active dashboard, but we do not permanently store your message contents or database copies of your emails on our servers.
         </p>
       </section>
 
