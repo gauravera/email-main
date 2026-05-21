@@ -23,11 +23,11 @@ export default function Dashboard() {
   const {
     csvData, hasDataHeader, prompt, model, previews, headers,
     totalRecipients, activeTab, fileName, manualInput, parsedData,
-    failedEmails, isProcessing, ccEmail,
+    failedEmails, isProcessing, ccEmail, activeCampaignId,
     setCsvData, setHasDataHeader, setPrompt, setModel, setPreviews,
     setHeaders, setIsProcessing, setFailedEmails, setTotalRecipients,
     setFileName, setActiveTab, setManualInput, setParsedData, setCcEmail,
-    handleDataChange
+    setActiveCampaignId, handleDataChange
   } = useDashboard();
 
   // 2. Local Component States (Safe to reset or kept simple)
@@ -128,6 +128,65 @@ export default function Dashboard() {
     }
   }, [selectedBrandId, brands]);
 
+  const syncDraftsFromDb = useCallback(async (campaignIdToSync?: string) => {
+    const targetCampaignId = campaignIdToSync || activeCampaignId;
+    if (!targetCampaignId) return;
+
+    try {
+      const response = await axios.get(`/api/campaigns/${targetCampaignId}`);
+      const { campaign } = response.data;
+      if (campaign && campaign.drafts) {
+        const mappedPreviews: EmailPreview[] = campaign.drafts.map((draft: any) => {
+          let generatedObj = null;
+          try {
+            generatedObj = typeof draft.generatedText === "string" ? JSON.parse(draft.generatedText) : draft.generatedText;
+          } catch (e) {
+            generatedObj = draft.generatedText;
+          }
+
+          let originalObj = null;
+          try {
+            originalObj = typeof draft.recipientData === "string" ? JSON.parse(draft.recipientData) : draft.recipientData;
+          } catch (e) {
+            originalObj = draft.recipientData;
+          }
+
+          return {
+            id: draft.id,
+            recipientEmail: draft.recipientEmail,
+            generated: generatedObj,
+            original: originalObj,
+            status: draft.status
+          };
+        });
+
+        setPreviews(mappedPreviews);
+
+        if (mappedPreviews.length > 0 && headers.length === 0) {
+          const firstOriginal = mappedPreviews[0].original;
+          if (Array.isArray(firstOriginal)) {
+            setHeaders(firstOriginal.map((_, idx) => `Column ${idx + 1}`));
+          } else if (typeof firstOriginal === "object" && firstOriginal !== null) {
+            setHeaders(Object.keys(firstOriginal));
+          }
+        }
+
+        const newFailed = new Set<number>();
+        mappedPreviews.forEach((p, idx) => {
+          if (p.status === "failed" || !p.recipientEmail || p.recipientEmail === "INVALID_EMAIL") {
+            newFailed.add(idx);
+          }
+        });
+        setFailedEmails(newFailed);
+
+        toast.success(`Successfully synchronized ${mappedPreviews.length} drafts from the database.`);
+      }
+    } catch (err: any) {
+      console.error("Failed to sync drafts from DB:", err);
+      toast.error("Failed to sync drafts: " + (err.response?.data?.error || err.message));
+    }
+  }, [activeCampaignId, headers, setPreviews, setHeaders, setFailedEmails]);
+
   const handleProcess = useCallback(async () => {
     if (csvData.length === 0) return;
     if (!prompt || !prompt.trim()) {
@@ -138,13 +197,16 @@ export default function Dashboard() {
     setPreviews([]);
     setHeaders([]);
 
+    let currentCampaignId: string | undefined = undefined;
+    let accumulatedPreviewsCount = 0;
+    let totalRowsCount = 0;
+
     try {
       const hasHeader = hasDataHeader;
       const dataRows = hasHeader ? csvData.slice(1) : csvData;
-      setTotalRecipients(dataRows.length);
-      let currentCampaignId: string | undefined = undefined;
+      totalRowsCount = dataRows.length;
+      setTotalRecipients(totalRowsCount);
       const BATCH_SIZE = 4;
-      let accumulatedPreviewsCount = 0;
 
       for (let i = 0; i < dataRows.length; i += BATCH_SIZE) {
         const batchRows = dataRows.slice(i, i + BATCH_SIZE);
@@ -161,9 +223,14 @@ export default function Dashboard() {
           config: { signature, ctaText, ctaLink }
         });
 
-        const { results, headers: returnedHeaders, campaignId: returnedCampaignId } = response.data;
+        const { results, headers: returnedHeaders, campaignId: returnedCampaignId, actualModelUsed: returnedModel } = response.data;
         if (!currentCampaignId && returnedCampaignId) {
           currentCampaignId = returnedCampaignId;
+          setActiveCampaignId(returnedCampaignId);
+        }
+
+        if (returnedModel) {
+          setModel(returnedModel);
         }
 
         if (i === 0) {
@@ -196,8 +263,13 @@ export default function Dashboard() {
       }
     } finally {
       setIsProcessing(false);
+      if (currentCampaignId && accumulatedPreviewsCount < totalRowsCount) {
+        setTimeout(() => {
+          syncDraftsFromDb(currentCampaignId);
+        }, 1500);
+      }
     }
-  }, [csvData, prompt, model, includeHeaderImage, includeCta, includeSignature, signature, ctaText, ctaLink]);
+  }, [csvData, prompt, model, includeHeaderImage, includeCta, includeSignature, signature, ctaText, ctaLink, hasDataHeader, selectedBrandId, setActiveCampaignId, setHeaders, setPreviews, setFailedEmails, setTotalRecipients, syncDraftsFromDb]);
 
   const handlePreviewEdit = useCallback((index: number, newGenerated: string) => {
     setPreviews((prev) => {
@@ -238,9 +310,11 @@ export default function Dashboard() {
       }
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!recipientEmail || !emailRegex.test(recipientEmail) || preview.status === "failed") {
-        console.warn(`Skipping send for index ${i} (no valid email address).`);
-        setFailedEmails((prev) => new Set(prev).add(i));
+      if (!recipientEmail || !emailRegex.test(recipientEmail) || preview.status === "failed" || preview.status === "sent") {
+        console.warn(`Skipping send for index ${i} (no valid email address or already sent).`);
+        if (preview.status === "failed") {
+          setFailedEmails((prev) => new Set(prev).add(i));
+        }
         continue;
       }
 
@@ -302,6 +376,7 @@ export default function Dashboard() {
           to: recipientEmail,
           cc: ccEmail,
           emailData: parsedPayload,
+          draftId: preview.id,
           attachments: attachments
         });
         setSentEmails((prev) => prev + 1);
@@ -450,6 +525,8 @@ export default function Dashboard() {
                   includeSignature={includeSignature}
                   failedIndices={failedEmails}
                   ccEmail={ccEmail}
+                  onSyncWithDb={syncDraftsFromDb}
+                  activeCampaignId={activeCampaignId}
                 />
               </div>
             </div>
@@ -471,6 +548,8 @@ export default function Dashboard() {
                 includeSignature={includeSignature}
                 failedIndices={failedEmails}
                 ccEmail={ccEmail}
+                onSyncWithDb={syncDraftsFromDb}
+                activeCampaignId={activeCampaignId}
               />
             </div>
           </div>

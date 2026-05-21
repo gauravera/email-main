@@ -1,8 +1,10 @@
 "use client";
 
 import React, { createContext, useContext, useState, useCallback } from "react";
+import { DEFAULT_MODEL } from "@/lib/gemini-models";
 
 export interface EmailPreview {
+  id?: string;
   recipientEmail?: string;
   generated: any;
   original: any;
@@ -27,6 +29,7 @@ interface DashboardContextType {
   headers: string[];
   isProcessing: boolean;
   failedEmails: Set<number>;
+  activeCampaignId: string | null;
 
   // Setters
   setCsvData: React.Dispatch<React.SetStateAction<string[][]>>;
@@ -43,6 +46,7 @@ interface DashboardContextType {
   setHeaders: React.Dispatch<React.SetStateAction<string[]>>;
   setIsProcessing: React.Dispatch<React.SetStateAction<boolean>>;
   setFailedEmails: React.Dispatch<React.SetStateAction<Set<number>>>;
+  setActiveCampaignId: React.Dispatch<React.SetStateAction<string | null>>;
   
   // Helpers
   handleDataChange: (data: string[][], isHeader: boolean, fName: string | null, tab: "csv" | "manual" | "data") => void;
@@ -62,11 +66,12 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [ccEmail, setCcEmail] = useState("");
 
   const [prompt, setPrompt] = useState("");
-  const [model, setModel] = useState("models/gemini-2.0-flash-lite-preview-02-05");
+  const [model, setModel] = useState(DEFAULT_MODEL);
   const [previews, setPreviews] = useState<EmailPreview[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [failedEmails, setFailedEmails] = useState<Set<number>>(new Set());
+  const [activeCampaignId, setActiveCampaignId] = useState<string | null>(null);
 
   const handleDataChange = useCallback((data: string[][], isHeader: boolean = true, fName: string | null = null, tab: "csv" | "manual" | "data" = "csv") => {
     setCsvData(data);
@@ -77,6 +82,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     setPreviews([]);
     setHeaders([]);
     setFailedEmails(new Set());
+    setActiveCampaignId(null);
     const count = isHeader ? Math.max(0, data.length - 1) : data.length;
     setTotalRecipients(count);
   }, []);
@@ -84,14 +90,15 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const resetGeneration = useCallback(() => {
     setPreviews([]);
     setFailedEmails(new Set());
+    setActiveCampaignId(null);
   }, []);
 
   return (
     <DashboardContext.Provider value={{
       csvData, hasDataHeader, fileName, activeTab, manualInput, parsedData, totalRecipients, ccEmail,
-      prompt, model, previews, headers, isProcessing, failedEmails,
+      prompt, model, previews, headers, isProcessing, failedEmails, activeCampaignId,
       setCsvData, setHasDataHeader, setFileName, setActiveTab, setManualInput, setParsedData, setTotalRecipients, setCcEmail,
-      setPrompt, setModel, setPreviews, setHeaders, setIsProcessing, setFailedEmails,
+      setPrompt, setModel, setPreviews, setHeaders, setIsProcessing, setFailedEmails, setActiveCampaignId,
       handleDataChange, resetGeneration
     }}>
       {children}

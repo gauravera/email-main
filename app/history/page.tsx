@@ -5,7 +5,8 @@ import axios from "axios";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { History, Calendar, CheckCircle2, XCircle, Clock, MessageSquare } from "lucide-react";
+import { History, Calendar, CheckCircle2, XCircle, Clock, MessageSquare, ExternalLink } from "lucide-react";
+import { useDashboard, EmailPreview } from "@/context/dashboard-context";
 
 export default function HistoryPage() {
   const { status } = useSession();
@@ -13,6 +14,102 @@ export default function HistoryPage() {
   const [activeTab, setActiveTab] = useState<"campaigns" | "chat">("campaigns");
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const {
+    setCsvData, setParsedData, setHasDataHeader, setFileName,
+    setActiveTab: setGlobalActiveTab, setTotalRecipients, setPrompt, setModel,
+    setPreviews, setHeaders, setFailedEmails, setActiveCampaignId
+  } = useDashboard();
+
+  const handleOpenInDashboard = (campaign: any) => {
+    if (!campaign.drafts || campaign.drafts.length === 0) {
+      alert("No drafts in this campaign to load.");
+      return;
+    }
+
+    const firstDraft = campaign.drafts[0];
+    let firstOriginal: any;
+    try {
+      firstOriginal = typeof firstDraft.recipientData === "string" ? JSON.parse(firstDraft.recipientData) : firstDraft.recipientData;
+    } catch (e) {
+      firstOriginal = firstDraft.recipientData;
+    }
+
+    let reconstructedHeaders: string[] = [];
+    if (Array.isArray(firstOriginal)) {
+      reconstructedHeaders = firstOriginal.map((_, idx) => `Column ${idx + 1}`);
+    } else if (typeof firstOriginal === "object" && firstOriginal !== null) {
+      reconstructedHeaders = Object.keys(firstOriginal);
+    }
+
+    const reconstructedRows: string[][] = [];
+    reconstructedRows.push(reconstructedHeaders);
+
+    campaign.drafts.forEach((draft: any) => {
+      let originalObj: any;
+      try {
+        originalObj = typeof draft.recipientData === "string" ? JSON.parse(draft.recipientData) : draft.recipientData;
+      } catch (e) {
+        originalObj = draft.recipientData;
+      }
+
+      if (Array.isArray(originalObj)) {
+        reconstructedRows.push(originalObj.map(val => String(val)));
+      } else if (typeof originalObj === "object" && originalObj !== null) {
+        const row = reconstructedHeaders.map(h => String(originalObj[h] ?? ""));
+        reconstructedRows.push(row);
+      } else {
+        reconstructedRows.push([String(originalObj)]);
+      }
+    });
+
+    const mappedPreviews: EmailPreview[] = campaign.drafts.map((draft: any) => {
+      let generatedObj: any = null;
+      try {
+        generatedObj = typeof draft.generatedText === "string" ? JSON.parse(draft.generatedText) : draft.generatedText;
+      } catch (e) {
+        generatedObj = draft.generatedText;
+      }
+
+      let originalObj: any = null;
+      try {
+        originalObj = typeof draft.recipientData === "string" ? JSON.parse(draft.recipientData) : draft.recipientData;
+      } catch (e) {
+        originalObj = draft.recipientData;
+      }
+
+      return {
+        id: draft.id,
+        recipientEmail: draft.recipientEmail,
+        generated: generatedObj,
+        original: originalObj,
+        status: draft.status
+      };
+    });
+
+    setCsvData(reconstructedRows);
+    setParsedData(reconstructedRows);
+    setHasDataHeader(true);
+    setFileName(`Campaign_${campaign.id}`);
+    setGlobalActiveTab("csv");
+    setTotalRecipients(campaign.drafts.length);
+
+    setPrompt(campaign.prompt);
+    setModel(campaign.model);
+    setPreviews(mappedPreviews);
+    setHeaders(reconstructedHeaders);
+
+    const newFailed = new Set<number>();
+    mappedPreviews.forEach((p, idx) => {
+      if (p.status === "failed" || !p.recipientEmail || p.recipientEmail === "INVALID_EMAIL") {
+        newFailed.add(idx);
+      }
+    });
+    setFailedEmails(newFailed);
+    setActiveCampaignId(campaign.id);
+
+    router.push("/");
+  };
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -121,6 +218,13 @@ export default function HistoryPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-4 text-sm font-medium">
+                          <button
+                            onClick={() => handleOpenInDashboard(campaign)}
+                            className="flex items-center gap-1.5 px-4 py-2.5 bg-primary text-white text-xs font-semibold uppercase tracking-wider rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/95 active:scale-95 transition-all"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            Open in Dashboard
+                          </button>
                           <div className="flex flex-col items-center p-2 rounded-xl bg-background border border-border">
                             <span className="text-2xl font-bold text-foreground">{campaign.drafts.length}</span>
                             <span className="text-[10px] uppercase text-muted-foreground">Drafts</span>

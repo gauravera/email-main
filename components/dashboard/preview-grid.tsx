@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ArrowRight, Loader2, Mail, FileText, Eye, Edit2, CheckCircle2, AlertTriangle, SendHorizonal } from "lucide-react";
+import { Sparkles, ArrowRight, Loader2, Mail, FileText, Eye, Edit2, CheckCircle2, AlertTriangle, SendHorizonal, RefreshCw } from "lucide-react";
 
 interface EmailPreview {
   original: any;
@@ -27,6 +27,8 @@ interface PreviewGridProps {
   includeSignature?: boolean;
   failedIndices?: Set<number>;
   ccEmail?: string;
+  onSyncWithDb?: () => Promise<void>;
+  activeCampaignId?: string | null;
 }
 
 export function PreviewGrid({
@@ -45,6 +47,8 @@ export function PreviewGrid({
   includeSignature,
   failedIndices = new Set(),
   ccEmail,
+  onSyncWithDb,
+  activeCampaignId,
 }: PreviewGridProps) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editState, setEditState] = useState<any>(null);
@@ -80,30 +84,62 @@ export function PreviewGrid({
             <p className="text-xs text-muted-foreground">AI-generated emails</p>
           </div>
         </div>
+        {activeCampaignId && onSyncWithDb && !isProcessing && (
+          <button
+            onClick={() => onSyncWithDb()}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-foreground text-[10px] font-semibold uppercase tracking-wider rounded-lg border border-border hover:bg-secondary/80 active:scale-95 transition-all"
+            title="Sync drafts from database"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Sync from DB
+          </button>
+        )}
       </div>
 
       {/* Generation Progress Bar */}
       {(isProcessing || (previews.length > 0 && totalRecipients > 0 && previews.length < totalRecipients)) && (
         <div className="px-4 sm:px-6 py-3 border-b border-border bg-secondary/20 shrink-0">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
-              </span>
-              <span className="text-[11px] font-semibold text-accent uppercase tracking-wider">Generating...</span>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {isProcessing ? (
+                  <>
+                    <span className="flex h-2 w-2 relative">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
+                    </span>
+                    <span className="text-[11px] font-semibold text-accent uppercase tracking-wider">Generating...</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+                    <span className="text-[11px] font-semibold text-amber-500 uppercase tracking-wider">Generation Stopped</span>
+                  </>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-[11px] font-semibold text-foreground tabular-nums">
+                  {previews.length} <span className="text-muted-foreground font-normal">/ {totalRecipients} emails</span>
+                </span>
+                {!isProcessing && activeCampaignId && onSyncWithDb && (
+                  <button
+                    onClick={() => onSyncWithDb()}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-[10px] font-bold uppercase tracking-wide hover:bg-primary/20 active:scale-95 transition-all"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    Sync
+                  </button>
+                )}
+              </div>
             </div>
-            <span className="text-[11px] font-semibold text-foreground tabular-nums">
-              {previews.length} <span className="text-muted-foreground font-normal">/ {totalRecipients} emails</span>
-            </span>
-          </div>
-          <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: totalRecipients > 0 ? `${(previews.length / totalRecipients) * 100}%` : '0%' }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
-              className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
-            />
+            <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: totalRecipients > 0 ? `${(previews.length / totalRecipients) * 100}%` : '0%' }}
+                transition={{ duration: 0.4, ease: 'easeOut' }}
+                className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+              />
+            </div>
           </div>
         </div>
       )}

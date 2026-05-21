@@ -9,7 +9,7 @@ export async function GET() {
     if (!(session?.user as any)?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const campaigns = await prisma.campaign.findMany({
-      where: { userId: (session.user as any).id },
+      where: { userId: (session!.user as any).id },
       orderBy: { createdAt: "desc" },
       include: { drafts: true },
     });

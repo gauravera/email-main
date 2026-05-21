@@ -2,7 +2,8 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { Users, Mail, Send } from "lucide-react";
+import { Users, Mail, Send, Activity } from "lucide-react";
+import Link from "next/link";
 
 export default async function AdminPage() {
   const session = await getServerSession(authOptions);
@@ -31,6 +32,17 @@ export default async function AdminPage() {
         accounts: {
           select: {
             scope: true
+          }
+        },
+        campaigns: {
+          select: {
+            _count: {
+              select: {
+                drafts: {
+                  where: { status: "sent" }
+                }
+              }
+            }
           }
         }
       }
@@ -96,8 +108,10 @@ export default async function AdminPage() {
                 <tr>
                   <th className="px-6 py-4 font-medium">User</th>
                   <th className="px-6 py-4 font-medium">Email</th>
+                  <th className="px-6 py-4 font-medium">Mails Sent</th>
                   <th className="px-6 py-4 font-medium">Permissions</th>
                   <th className="px-6 py-4 font-medium">Joined Date</th>
+                  <th className="px-6 py-4 font-medium text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -113,6 +127,7 @@ export default async function AdminPage() {
                   const grantedCount = requestedScopes.filter(s => userScopeString.includes(s)).length;
                   const totalCount = requestedScopes.length;
                   const hasAll = grantedCount === totalCount;
+                  const mailsSent = u.campaigns.reduce((acc, c) => acc + c._count.drafts, 0);
                   
                   return (
                   <tr key={u.id} className="hover:bg-muted/50 transition-colors">
@@ -130,6 +145,9 @@ export default async function AdminPage() {
                     <td className="px-6 py-4 text-muted-foreground">
                       {u.email}
                     </td>
+                    <td className="px-6 py-4 text-muted-foreground">
+                      {mailsSent}
+                    </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                         hasAll ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'
@@ -140,12 +158,21 @@ export default async function AdminPage() {
                     <td className="px-6 py-4 text-muted-foreground">
                       {new Date(u.createdAt).toLocaleDateString()}
                     </td>
+                    <td className="px-6 py-4 text-right">
+                      <Link
+                        href={`/admin/user/${u.id}`}
+                        className="inline-flex items-center justify-center rounded-md text-xs font-medium border border-border bg-background hover:bg-muted h-8 px-3 transition-colors"
+                      >
+                        <Activity className="w-3 h-3 mr-2" />
+                        View Analytics
+                      </Link>
+                    </td>
                   </tr>
                 );
                 })}
                 {users.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-6 py-8 text-center text-muted-foreground">
+                    <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
                       No users found.
                     </td>
                   </tr>
