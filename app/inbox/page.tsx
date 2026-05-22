@@ -102,8 +102,12 @@ export default function InboxPage() {
 
   const fetchEmails = useCallback(
     async (folder: "inbox" | "sent" | "drafts", query = "", silent = false) => {
-      if (!silent) setIsLoading(true);
-      else setIsRefreshing(true);
+      if (!silent) {
+        setIsLoading(true);
+        setSelectedEmail(null);
+      } else {
+        setIsRefreshing(true);
+      }
 
       try {
         const response = await axios.get("/api/inbox", {
@@ -114,13 +118,6 @@ export default function InboxPage() {
         });
         const fetchedEmails = response.data.emails || [];
         setEmails(fetchedEmails);
-
-        // Auto-select the first email if available and not on mobile view
-        if (fetchedEmails.length > 0) {
-          setSelectedEmail(fetchedEmails[0]);
-        } else {
-          setSelectedEmail(null);
-        }
       } catch (err: any) {
         console.error("Failed to load inbox emails:", err);
         toast.error("Failed to load emails: " + (err.response?.data?.error || err.message));
