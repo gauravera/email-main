@@ -8,100 +8,132 @@ export const metadata = {
 
 export default function PrivacyPolicy() {
   return (
-    <div className="max-w-4xl mx-auto py-12 px-6">
-      <div className="mb-8">
-        <Link href="/" className="text-sm text-blue-600 hover:underline">← Back to Home</Link>
-      </div>
-
-      <h1 className="text-3xl font-bold mb-2">Privacy Policy</h1>
-      <p className="mb-8 text-gray-500 text-sm">Last updated: April 22, 2025 &nbsp;|&nbsp; App: <strong>Mail by GPSERP</strong></p>
-
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
-        <p className="mb-4">
-          Welcome to <strong>Mail by GPSERP</strong> (<a href="https://email-gpserp.vercel.app" className="text-blue-600 hover:underline">https://email-gpserp.vercel.app</a>).
-          We are committed to protecting your personal data. This policy explains how we collect, use, and safeguard information
-          when you use our AI-powered email outreach platform.
-        </p>
-      </section>
-
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">2. Data We Collect</h2>
-        <p className="mb-4">
-          When you sign in with Google, we collect and use only the following data:
-        </p>
-        <ul className="list-disc pl-6 space-y-2">
-          <li><strong>Google Account Profile</strong>: your name, email address, and profile photo (from Google OAuth).</li>
-          <li><strong>Gmail Access Permission</strong>: we request the <code>https://www.googleapis.com/auth/gmail.modify</code> scope. This allows us to display your outreach inbox, read inbound replies and bounce notifications, compose and send emails, and mark emails as read/unread when you view them in our application.</li>
-          <li><strong>Uploaded CSV Data</strong>: recipient names and email addresses you upload to generate personalized emails. This data is processed in memory and not stored on our servers.</li>
-        </ul>
-      </section>
-
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">3. How We Use Your Data</h2>
-        <ul className="list-disc pl-6 space-y-2">
-          <li>To authenticate you via Google OAuth and maintain your session.</li>
-          <li>To display and manage your sales outreach inbox, including email threads and inbound replies.</li>
-          <li>To compose, send, and update the status (read/unread) of emails via your own Gmail account.</li>
-          <li>To identify bounce notifications (e.g. from mailer-daemon) to track and report outreach delivery rates.</li>
-          <li>To generate personalized email content using the AI model you select.</li>
-        </ul>
-        <p className="mt-4">
-          We do <strong>not</strong> sell, rent, or share your data with third parties for advertising or marketing purposes.
-        </p>
-      </section>
-
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">4. Google API Services — Limited Use Disclosure</h2>
-        <p className="mb-4">
-          <strong>Mail by GPSERP</strong>'s use and transfer of information received from Google APIs to any other app will adhere to the{' '}
-          <a
-            href="https://developers.google.com/terms/api-services-user-data-policy"
-            className="text-blue-600 hover:underline"
-            target="_blank"
-            rel="noreferrer"
+    <div className="w-full h-screen overflow-y-auto bg-background text-foreground">
+      <div className="max-w-4xl mx-auto py-16 px-6 sm:px-8 w-full">
+        {/* Back Link */}
+        <div className="mb-10">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-accent transition-colors"
           >
-            Google API Services User Data Policy
-          </a>
-          , including the <strong>Limited Use</strong> requirements.
-        </p>
-        <p>
-          Specifically: data obtained from Google APIs is used only to provide the email-sending feature of this application,
-          and is not used to develop, improve, or train generalized AI/ML models.
-        </p>
-      </section>
+            ← Back to Dashboard
+          </Link>
+        </div>
 
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">5. Data Retention &amp; Security</h2>
-        <p className="mb-4">
-          OAuth tokens are stored securely in your database session. We transiently fetch and cache message details to display your active dashboard, but we do not permanently store your message contents or database copies of your emails on our servers.
-        </p>
-      </section>
+        {/* Header Block */}
+        <div className="mb-12 border-b border-border pb-8">
+          <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-accent to-purple-500 bg-clip-text text-transparent">
+            Privacy Policy
+          </h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Last updated: May 22, 2026 &nbsp;|&nbsp; App: <strong className="text-foreground">Mail by GPSERP</strong>
+          </p>
+        </div>
 
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">6. Your Rights</h2>
-        <p className="mb-4">
-          You may revoke our application's access to your Google account at any time via your{' '}
-          <a href="https://myaccount.google.com/permissions" className="text-blue-600 hover:underline" target="_blank" rel="noreferrer">
-            Google Account permissions
-          </a>. Upon revocation, we will no longer be able to send emails on your behalf.
-        </p>
-      </section>
+        {/* Content sections */}
+        <div className="space-y-10 text-sm sm:text-base leading-relaxed text-muted-foreground">
+          <section className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm">
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4">1. Introduction</h2>
+            <p className="mb-4">
+              Welcome to <strong>Mail by GPSERP</strong> (<a href="https://mail.gpserp.com" className="text-primary hover:underline font-medium">https://mail.gpserp.com</a>).
+              We are deeply committed to protecting your personal data and respect your privacy. This policy explains how we collect, use, and safeguard your information
+              when you use our AI-powered email outreach platform.
+            </p>
+          </section>
 
-      <section>
-        <h2 className="text-2xl font-semibold mb-4">7. Contact Us</h2>
-        <p className="mb-4">
-          If you have any questions about this privacy policy, please contact us at{' '}
-          <a href="mailto:support@gpserp.com" className="text-blue-600 hover:underline">support@gpserp.com</a>.
-        </p>
-      </section>
+          <section className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm">
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4">2. Data We Collect</h2>
+            <p className="mb-4">
+              When you authenticate with our app using your Google Account, we collect and process only the minimum required data necessary to perform our service:
+            </p>
+            <ul className="list-disc pl-6 space-y-3">
+              <li>
+                <strong className="text-foreground">Google Account Profile</strong>: your name, email address, and profile photo (retrieved via secure Google OAuth).
+              </li>
+              <li>
+                <strong className="text-foreground">Gmail Access Permission</strong>: We request the <code>https://www.googleapis.com/auth/gmail.modify</code> scope. This secure integration allows us to display your outreach inbox, monitor inbound replies or bounce notifications, draft and send personalized campaigns, and toggle read/unread status on your behalf.
+              </li>
+              <li>
+                <strong className="text-foreground">Uploaded Campaign Data</strong>: Recipient details (such as names and email addresses) that you provide via CSV upload or manual text input to personalize your outreach. This data is handled in-memory and is never shared.
+              </li>
+            </ul>
+          </section>
 
-      <div className="mt-12 pt-6 border-t border-gray-200 text-sm text-gray-500">
-        <Link href="/" className="hover:underline">Home</Link>
-        {' · '}
-        <Link href="/terms" className="hover:underline">Terms of Service</Link>
-        {' · '}
-        <strong>Mail by GPSERP</strong>
+          <section className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm">
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4">3. How We Use Your Data</h2>
+            <p className="mb-4">
+              We process your data strictly to enable the features of our email outreach service:
+            </p>
+            <ul className="list-disc pl-6 space-y-3">
+              <li>To authenticate you securely via Google OAuth and manage your active application session.</li>
+              <li>To display and synchronize your outreach inbox threads, tracking client responses in real time.</li>
+              <li>To compose, send, and manage the read/unread statuses of campaign emails through your Gmail account.</li>
+              <li>To auto-detect delivery failures (e.g. bounce responses from mailer-daemon) to provide accurate outreach delivery metrics.</li>
+              <li>To generate personalized, high-converting email copy powered by the AI model of your choice.</li>
+            </ul>
+            <p className="mt-4 border-t border-border pt-4 text-sm font-semibold text-foreground">
+              We do NOT sell, lease, rent, or distribute your email content or personal data to third parties, advertising networks, or data brokers.
+            </p>
+          </section>
+
+          <section className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm">
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4">4. Google API Services — Limited Use Disclosure</h2>
+            <p className="mb-4">
+              <strong>Mail by GPSERP</strong>'s use and transfer of information received from Google APIs to any other app will adhere to the{' '}
+              <a
+                href="https://developers.google.com/terms/api-services-user-data-policy"
+                className="text-primary hover:underline font-medium"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Google API Services User Data Policy
+              </a>
+              , including the <strong>Limited Use</strong> requirements.
+            </p>
+            <p className="mt-2">
+              Specifically: Data obtained from Google APIs is used strictly to provide the email automation interface and is never utilized to develop, refine, or train generalized, consumer-facing AI/ML models.
+            </p>
+          </section>
+
+          <section className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm">
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4">5. Data Retention &amp; Security</h2>
+            <p className="mb-4">
+              OAuth tokens are encrypted and stored in your secure user session. We transiently cache inbox and thread details to render your active dashboard. We do not maintain copies of your email messages, templates, or outreach contents on our servers beyond what is required to transmit drafts and track campaign statistics.
+            </p>
+          </section>
+
+          <section className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm">
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4">6. Your Rights &amp; Access Revocation</h2>
+            <p className="mb-4">
+              You are in full control of your Google integrations. You may disconnect your Gmail account or completely revoke our platform access at any time through your{' '}
+              <a href="https://myaccount.google.com/permissions" className="text-primary hover:underline font-medium" target="_blank" rel="noreferrer">
+                Google Security Permissions console
+              </a>. Once access is revoked, we will immediately lose the ability to send emails or sync threads on your behalf.
+            </p>
+          </section>
+
+          <section className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm">
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4">7. Contact Us</h2>
+            <p className="mb-4">
+              If you have any questions, feedback, or concerns regarding our privacy practices or data handling, please reach out to us:
+            </p>
+            <a href="mailto:support@gpserp.com" className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-secondary text-secondary-foreground font-semibold hover:bg-muted transition-colors">
+              support@gpserp.com
+            </a>
+          </section>
+        </div>
+
+        {/* Footer Navigation */}
+        <div className="mt-16 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+          <div className="flex gap-4">
+            <Link href="/" className="hover:text-foreground transition-colors font-medium">Home</Link>
+            <span>·</span>
+            <Link href="/terms" className="hover:text-foreground transition-colors font-medium">Terms of Service</Link>
+          </div>
+          <div>
+            <strong>Mail by GPSERP</strong> &copy; {new Date().getFullYear()}
+          </div>
+        </div>
       </div>
     </div>
   );
